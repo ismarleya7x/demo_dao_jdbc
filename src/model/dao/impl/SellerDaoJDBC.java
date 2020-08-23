@@ -28,34 +28,34 @@ public class SellerDaoJDBC implements SellerDAO {
 	@Override
 	public void insert(Seller seller) {
 		PreparedStatement stm = null;
-		
+
 		String sql = "INSERT INTO seller (Name, Email, BirthDate, BaseSalary, DepartmentId) VALUES (?,?,?,?,?)";
-		
+
 		try {
 			stm = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-			
+
 			stm.setString(1, seller.getNome());
 			stm.setString(2, seller.getEmail());
 			stm.setDate(3, new java.sql.Date(seller.getBirthDate().getTime()));
 			stm.setDouble(4, seller.getBaseSalary());
 			stm.setInt(5, seller.getDepartment().getId());
-			
+
 			int rowsAffected = stm.executeUpdate();
-			
-			if(rowsAffected > 0) {
+
+			if (rowsAffected > 0) {
 				ResultSet res = stm.getGeneratedKeys();
-				
-				if(res.next()) {
+
+				if (res.next()) {
 					int id = res.getInt(1);
 					seller.setId(id);
 				}
 				DB.closeResultSet(res);
-			}else {
+			} else {
 				throw new DBException("Unexpected error! No rows affected");
 			}
-		}catch(SQLException e) {
+		} catch (SQLException e) {
 			throw new DBException(e.getMessage());
-		}finally {
+		} finally {
 			DB.closeStatement(stm);
 		}
 
@@ -63,7 +63,27 @@ public class SellerDaoJDBC implements SellerDAO {
 
 	@Override
 	public void update(Seller seller) {
-		// TODO Auto-generated method stub
+		PreparedStatement stm = null;
+
+		String sql = "UPDATE seller SET Name = ?, Email = ?, BirthDate = ?, BaseSalary = ?, DepartmentId = ?"
+					 + " WHERE Id = ?";
+
+		try {
+			stm = conn.prepareStatement(sql);
+
+			stm.setString(1, seller.getNome());
+			stm.setString(2, seller.getEmail());
+			stm.setDate(3, new java.sql.Date(seller.getBirthDate().getTime()));
+			stm.setDouble(4, seller.getBaseSalary());
+			stm.setInt(5, seller.getDepartment().getId());
+			stm.setInt(6, seller.getId());
+			
+			stm.executeUpdate();
+		} catch (SQLException e) {
+			throw new DBException(e.getMessage());
+		} finally {
+			DB.closeStatement(stm);
+		}
 
 	}
 
@@ -148,7 +168,7 @@ public class SellerDaoJDBC implements SellerDAO {
 				}
 
 				listTmpSeller.add(instantiateSeller(res, dep));
-				
+
 			}
 
 			return listTmpSeller;
@@ -184,7 +204,7 @@ public class SellerDaoJDBC implements SellerDAO {
 				}
 
 				listTmpSeller.add(instantiateSeller(res, dep));
-				
+
 			}
 
 			return listTmpSeller;
