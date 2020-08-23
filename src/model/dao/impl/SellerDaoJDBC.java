@@ -4,7 +4,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import db.DB;
 import db.DBException;
@@ -13,9 +16,9 @@ import model.entities.Department;
 import model.entities.Seller;
 
 public class SellerDaoJDBC implements SellerDAO {
-	
+
 	private Connection conn;
-	
+
 	public SellerDaoJDBC(Connection conn) {
 		this.conn = conn;
 	}
@@ -23,19 +26,19 @@ public class SellerDaoJDBC implements SellerDAO {
 	@Override
 	public void insert(Seller seller) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void update(Seller seller) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void deletebyId(Integer id) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -43,32 +46,31 @@ public class SellerDaoJDBC implements SellerDAO {
 
 		PreparedStatement stm = null;
 		ResultSet res = null;
-		
+
 		try {
-			String sql = "SELECT seller.*, department.Name as DepName "+
-						 "FROM seller JOIN department ON seller.DepartmentId = department.Id "+
-						 "WHERE seller.Id = ?";
-			
+			String sql = "SELECT seller.*, department.Name as DepName "
+					+ "FROM seller JOIN department ON seller.DepartmentId = department.Id " + "WHERE seller.Id = ?";
+
 			stm = conn.prepareStatement(sql);
-			
+
 			stm.setInt(1, id);
 			res = stm.executeQuery();
-			if(res.next()) {
+			if (res.next()) {
 				Department tmpDep = instantiateDepartment(res);
-				
+
 				Seller tmpSeller = instantiateSeller(res, tmpDep);
-				
+
 				return tmpSeller;
 			}
-			
+
 			return null;
-		}catch(SQLException e) {
+		} catch (SQLException e) {
 			throw new DBException(e.getMessage());
-		}finally {
+		} finally {
 			DB.closeStatement(stm);
 			DB.closeResultSet(res);
 		}
-		
+
 	}
 
 	private Seller instantiateSeller(ResultSet res, Department tmpDep) throws SQLException {
@@ -79,7 +81,7 @@ public class SellerDaoJDBC implements SellerDAO {
 		tmpSeller.setBaseSalary(res.getDouble("BaseSalary"));
 		tmpSeller.setBirthDate(res.getDate("BirthDate"));
 		tmpSeller.setDepartment(tmpDep);
-		
+
 		return tmpSeller;
 	}
 
@@ -87,7 +89,7 @@ public class SellerDaoJDBC implements SellerDAO {
 		Department tmpDep = new Department();
 		tmpDep.setId(res.getInt("DepartmentId"));
 		tmpDep.setName(res.getString("DepName"));
-		
+
 		return tmpDep;
 	}
 
@@ -95,6 +97,42 @@ public class SellerDaoJDBC implements SellerDAO {
 	public List<Seller> findAll() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	@Override
+	public List<Seller> findByDepartment(Department department) {
+		PreparedStatement stm = null;
+		ResultSet res = null;
+
+		try {
+			String sql = "SELECT seller.*, department.Name as DepName "
+					+ "FROM seller JOIN department ON seller.DepartmentId = department.Id " + "WHERE DepartmentId = ?";
+
+			stm = conn.prepareStatement(sql);
+
+			stm.setInt(1, department.getId());
+			res = stm.executeQuery();
+			List<Seller> listTmpSeller = new ArrayList<>();
+			Map<Integer, Department> map = new HashMap<>();
+			while (res.next()) {
+				Department dep = map.get(res.getInt("DepartmentId"));
+
+				if (dep == null) {
+					dep = instantiateDepartment(res);
+					map.put(res.getInt("DepartmentId"), dep);
+				}
+
+				listTmpSeller.add(instantiateSeller(res, dep));
+				
+			}
+
+			return listTmpSeller;
+		} catch (SQLException e) {
+			throw new DBException(e.getMessage());
+		} finally {
+			DB.closeStatement(stm);
+			DB.closeResultSet(res);
+		}
 	}
 
 }
